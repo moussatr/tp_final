@@ -6,31 +6,28 @@ DB_CONFIG = {
     "port": int(os.getenv("DB_PORT", "3306")),
     "user": os.getenv("DB_USER", "root"),
     "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "socialmetrics"),
 }
 
 
 def init_db() -> None:
     conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        CREATE DATABASE IF NOT EXISTS socialmetrics
-        """
-    )
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS socialmetrics.tweets (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            text TEXT NOT NULL,
-            positive TINYINT NOT NULL DEFAULT 0,
-            negative TINYINT NOT NULL DEFAULT 0
+    try:
+        cursor = conn.cursor()
+        cursor.execute("CREATE DATABASE IF NOT EXISTS socialmetrics")
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS socialmetrics.tweets (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                text TEXT NOT NULL,
+                positive TINYINT NOT NULL DEFAULT 0,
+                negative TINYINT NOT NULL DEFAULT 0
+            )
+            """
         )
-        """
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
+        conn.commit()
+        cursor.close()
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
