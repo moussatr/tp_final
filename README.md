@@ -13,7 +13,7 @@ Cette application Flask expose une API pour analyser le sentiment de tweets à p
    ```bash
    pip install -r requirements.txt
    ```
-3. Démarrer MySQL et initialiser la base de données :
+3. Démarrer MySQL et initialiser la base de données (création de la table + données d'exemple) :
    ```bash
    python3 init_db.py
    ```
@@ -26,18 +26,36 @@ Cette application Flask expose une API pour analyser le sentiment de tweets à p
    python3 app.py
    ```
 
+## Variables d'environnement
+
+| Variable | Description | Valeur par défaut |
+|----------|-------------|-------------------|
+| `DB_HOST` | Hôte MySQL | `localhost` |
+| `DB_PORT` | Port MySQL | `3306` |
+| `DB_USER` | Utilisateur MySQL | `root` |
+| `DB_PASSWORD` | Mot de passe MySQL | *(vide)* |
+| `DB_NAME` | Nom de la base | `socialmetrics` |
+| `MODEL_PATH` | Chemin du modèle sauvegardé | `model.joblib` |
+| `REPORT_PATH` | Chemin du rapport PDF | `reports/sentiment_evaluation_report.pdf` |
+| `REPORT_JSON_PATH` | Chemin du rapport JSON | `reports/sentiment_evaluation_report.json` |
+| `FLASK_DEBUG` | Mode debug Flask (`true` / `false`) | `true` |
+| `PORT` | Port de l'API Flask | `5001` |
+
 ## Endpoints disponibles
 
 ### Santé de l'API
 ```bash
-curl http://127.0.0.1:5000/health
+curl http://127.0.0.1:5001/health
 ```
 
 ### Analyse de sentiment
+
+Le corps JSON peut être un objet avec une clé `tweets` ou une liste directe de chaînes.
+
 ```bash
-curl -X POST http://127.0.0.1:5000/analyze \
+curl -X POST http://127.0.0.1:5001/analyze \
   -H "Content-Type: application/json" \
-  -d '{"tweets": ["J'adore ce produit", "C'est vraiment nul", "Excellent service"]}'
+  -d "{\"tweets\": [\"J'adore ce produit\", \"C'est vraiment nul\", \"Excellent service\"]}"
 ```
 
 Réponse attendue :
@@ -51,19 +69,22 @@ Réponse attendue :
 
 ### Réentraînement du modèle
 ```bash
-curl -X POST http://127.0.0.1:5000/train
+curl -X POST http://127.0.0.1:5001/train
 ```
 
 ### Rapport d'évaluation
+
+Évalue le modèle sauvegardé sur le jeu de test (25 % des données) et génère les rapports PDF et JSON.
+
 ```bash
-curl http://127.0.0.1:5000/report
+curl http://127.0.0.1:5001/report
 ```
 
-Le rapport PDF est généré dans le dossier reports/.
+Les rapports sont générés dans le dossier `reports/`.
 
 ## Réentraînement automatisé
 
-Un script d'automatisation est fourni dans scripts/retrain.sh.
+Un script d'automatisation est fourni dans `scripts/retrain.sh`. Il réentraîne le modèle et génère les rapports PDF et JSON.
 
 ```bash
 chmod +x scripts/retrain.sh
