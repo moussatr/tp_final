@@ -13,6 +13,21 @@ app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
 
 
+@app.route("/", methods=["GET"])
+def index() -> Any:
+    return jsonify(
+        {
+            "message": "API d'analyse de sentiments",
+            "endpoints": {
+                "health": "GET /health",
+                "analyze": "POST /analyze avec {'tweets': ['tweet 1', 'tweet 2']}",
+                "train": "POST /train",
+                "report": "GET /report",
+            },
+        }
+    )
+
+
 @app.route("/health", methods=["GET"])
 def health() -> Any:
     return jsonify({"status": "ok"})

@@ -13,15 +13,24 @@ Cette application Flask expose une API pour analyser le sentiment de tweets à p
    ```bash
    pip install -r requirements.txt
    ```
-3. Démarrer MySQL et initialiser la base de données (création de la table + données d'exemple) :
+3. Démarrer MySQL.
+
+   Avec Docker :
+   ```bash
+   docker compose up -d mysql
+   ```
+
+   Ou avec un MySQL installé localement, vérifier que le service écoute sur `localhost:3306`.
+
+4. Initialiser la base de données (création de la table + données d'exemple) :
    ```bash
    python3 init_db.py
    ```
-4. Réentraîner et sauvegarder le modèle initial :
+5. Réentraîner et sauvegarder le modèle initial :
    ```bash
    python3 retrain_model.py
    ```
-5. Lancer l'API :
+6. Lancer l'API :
    ```bash
    python3 app.py
    ```
@@ -84,14 +93,26 @@ Les rapports sont générés dans le dossier `reports/`.
 
 ## Réentraînement automatisé
 
-Un script d'automatisation est fourni dans `scripts/retrain.sh`. Il réentraîne le modèle et génère les rapports PDF et JSON.
+Des scripts d'automatisation sont fournis dans `scripts/`. Ils réentraînent le modèle et génèrent les rapports PDF et JSON.
 
 ```bash
 chmod +x scripts/retrain.sh
 ./scripts/retrain.sh
 ```
 
+Sous Windows / PowerShell :
+```powershell
+.\scripts\retrain.ps1
+```
+
 Exemple de cron hebdomadaire :
 ```bash
 0 3 * * 1 cd /chemin/vers/le/projet && /chemin/vers/.venv/bin/python retrain_model.py >> cron.log 2>&1
+```
+
+Exemple de tâche planifiée Windows hebdomadaire :
+```powershell
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File C:\chemin\vers\le\projet\scripts\retrain.ps1"
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At 03:00
+Register-ScheduledTask -TaskName "SocialMetrics-Retrain" -Action $action -Trigger $trigger
 ```

@@ -1,16 +1,25 @@
 from __future__ import annotations
 
 import os
+import re
 
 import mysql.connector
+from mysql.connector import Error
 
+DB_NAME = os.getenv("DB_NAME", "socialmetrics")
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
     "port": int(os.getenv("DB_PORT", "3306")),
     "user": os.getenv("DB_USER", "root"),
     "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "socialmetrics"),
+    "database": DB_NAME,
 }
+
+MYSQL_HELP = (
+    "Impossible de se connecter à MySQL. Vérifie qu'un serveur MySQL est démarré "
+    f"sur {DB_CONFIG['host']}:{DB_CONFIG['port']} et que DB_USER/DB_PASSWORD sont corrects. "
+    "Avec Docker, tu peux lancer: docker compose up -d mysql"
+)
 
 SAMPLE_TWEETS = [
     ("J'adore ce produit, il est incroyable !", 1, 0),
@@ -30,17 +39,27 @@ def get_db_connection(include_database: bool = True) -> mysql.connector.MySQLCon
     config = DB_CONFIG.copy()
     if not include_database:
         config.pop("database", None)
-    return mysql.connector.connect(**config)
+    try:
+        return mysql.connector.connect(**config)
+    except Error as exc:
+        raise RuntimeError(MYSQL_HELP) from exc
+
+
+def _quote_identifier(identifier: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9_]+", identifier):
+        raise ValueError("DB_NAME ne doit contenir que des lettres, chiffres et underscores")
+    return f"`{identifier}`"
 
 
 def init_db() -> None:
     conn = get_db_connection(include_database=False)
     try:
         cursor = conn.cursor()
-        cursor.execute("CREATE DATABASE IF NOT EXISTS socialmetrics")
+        database_name = _quote_identifier(DB_NAME)
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database_name}")
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS socialmetrics.tweets (
+            f"""
+            CREATE TABLE IF NOT EXISTS {database_name}.tweets (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 text TEXT NOT NULL,
                 positive TINYINT NOT NULL DEFAULT 0,
